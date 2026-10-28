@@ -10,7 +10,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"db:push": "supabase db push",
+		"db:push": "supabase db push --linked",
 		"functions:deploy": "supabase functions deploy --use-api",
 		"config:push": "supabase config push",
 		"deploy:backend": "npm run db:push && npm run functions:deploy",
