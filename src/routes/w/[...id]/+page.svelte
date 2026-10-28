@@ -17,6 +17,7 @@
 	} from '#lib/wiki.svelte.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 	import { ui } from '#lib/ui.svelte.ts';
+	import { sync } from '#lib/sync.svelte.ts';
 	import WikiContent from '#lib/components/WikiContent.svelte';
 	import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
 	import NamespaceList from '#lib/components/NamespaceList.svelte';
@@ -36,6 +37,8 @@
 
 	$effect(() => {
 		const id = requested;
+		// Reload when a save of this page reaches the server (it may have been merged).
+		void sync.versions[id];
 		loading = true;
 		(async () => {
 			let p = await getPage(id);
@@ -52,6 +55,8 @@
 			toast.error(e);
 		});
 	});
+
+	const local = $derived(data ? sync.latest(data.id) : undefined);
 
 	const toc = $derived(headings.filter((h) => h.level >= 2 && h.level <= 3));
 
@@ -96,11 +101,28 @@
 			<div class="progress"></div>
 		{:else if data}
 			<WikiContent text={data.content} pageId={data.id} bind:headings />
-			<p class="meta body-s muted">
-				<span class="icon">schedule</span>
-				Ultima modifica {timeAgo(data.updated_at)}{data.updated_by ? ` da ${data.updated_by}` : ''} ·
-				<a href={historyHref(data.id)}>cronologia</a>
-			</p>
+			{#if local?.state === 'conflict' || local?.state === 'failed'}
+				<p class="meta body-s warn">
+					<span class="icon">{local.state === 'conflict' ? 'call_split' : 'error'}</span>
+					<span class="grow">
+						{local.state === 'conflict'
+							? `Anche ${local.theirs?.by ?? 'qualcun altro'} ha modificato questi punti: scegli quale versione tenere.`
+							: 'Questa modifica non è stata salvata online.'}
+					</span>
+					<button class="btn text" onclick={() => (sync.resolving = local.key)}>Risolvi</button>
+				</p>
+			{:else if local}
+				<p class="meta body-s muted">
+					<span class="icon">{sync.online ? 'cloud_sync' : 'cloud_off'}</span>
+					{sync.online ? 'Salvataggio online in corso…' : 'Salvata su questo dispositivo: verrà inviata appena torni online.'}
+				</p>
+			{:else}
+				<p class="meta body-s muted">
+					<span class="icon">schedule</span>
+					Ultima modifica {timeAgo(data.updated_at)}{data.updated_by ? ` da ${data.updated_by}` : ''} ·
+					<a href={historyHref(data.id)}>cronologia</a>
+				</p>
+			{/if}
 		{:else if !isNamespace}
 			<div class="missing card outlined">
 				<span class="icon">note_add</span>
@@ -174,6 +196,12 @@
 	}
 	.meta .icon {
 		font-size: 16px;
+	}
+	.meta.warn {
+		color: var(--md-error);
+	}
+	.meta .grow {
+		flex: 1;
 	}
 	.missing {
 		display: flex;

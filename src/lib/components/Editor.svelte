@@ -1,32 +1,31 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { beforeNavigate, goto } from '$app/navigation';
-	import { ApiError } from '#lib/supabase.ts';
 	import { toast } from '#lib/toast.svelte.ts';
-	import { getNs, pageHref, pageIndex, savePage, uploadMedia, timeAgo } from '#lib/wiki.svelte.ts';
+	import { sync, type SaveBase } from '#lib/sync.svelte.ts';
+	import { hasConflictMarkers } from '#lib/merge.ts';
+	import { getNs, pageHref, pageIndex, uploadMedia, timeAgo } from '#lib/wiki.svelte.ts';
 	import WikiContent from './WikiContent.svelte';
 	import Dialog from './Dialog.svelte';
 
 	let {
 		id,
 		initial,
-		baseRev,
-		isNew
-	}: { id: string; initial: string; baseRev: number | null; isNew: boolean } = $props();
+		base,
+		baseContent,
+		isNew,
+		useDraft = false
+	}: { id: string; initial: string; base: SaveBase; baseContent: string; isNew: boolean; useDraft?: boolean } = $props();
 
 	// svelte-ignore state_referenced_locally -- the editor is keyed by page id, initial is read once
 	let text = $state(initial);
-	// svelte-ignore state_referenced_locally
-	let rev = $state(baseRev);
 	let summary = $state('');
 	let minor = $state(false);
-	let saving = $state(false);
 	let uploading = $state(0);
 	let preview = $state(true);
 	let mobileTab = $state<'write' | 'preview'>('write');
 	let previewText = $state('');
 	let dragging = $state(false);
-	let conflictOpen = $state(false);
 	let deleteOpen = $state(false);
 	let linkOpen = $state(false);
 	let linkQuery = $state('');
@@ -54,8 +53,11 @@
 			const raw = localStorage.getItem(draftKey);
 			if (raw) {
 				const d = JSON.parse(raw);
-				if (d.text && d.text !== initial) draft = d;
-				else localStorage.removeItem(draftKey);
+				if (d.text && d.text !== initial) {
+					// Coming from "merge by hand": open straight on the combined text.
+					if (useDraft) text = d.text;
+					else draft = d;
+				} else localStorage.removeItem(draftKey);
 			}
 		} catch {
 			/* storage unavailable */
@@ -63,7 +65,11 @@
 		if (!draft) {
 			ta.focus();
 			// Put the cursor somewhere useful: first agenda item of a meeting, else after the title.
-			if (isNew) {
+			const marker = text.indexOf('<<<<<<< ');
+			if (useDraft && marker !== -1) {
+				ta.value = text;
+				ta.setSelectionRange(marker, marker);
+			} else if (isNew) {
 				const agenda = text.indexOf('  - \n');
 				const title = text.indexOf('\n\n');
 				const pos = agenda !== -1 ? agenda + 4 : title !== -1 ? title + 2 : text.length;
@@ -101,41 +107,31 @@
 	});
 
 	// ------------------------------------------------------------------ save
-	async function save(force = false) {
-		if (saving) return;
+	// Saving is local and instant; the sync worker sends it in the background.
+	function save() {
 		if (!text.trim() && !isNew) {
 			deleteOpen = true;
 			return;
 		}
-		saving = true;
-		try {
-			const res = await savePage({ id, content: text, summary, minor, baseRev: force ? undefined : rev });
-			saved = true;
-			clearDraft();
-			toast.show(res.unchanged ? 'Nessuna modifica da salvare' : 'Pagina salvata');
-			goto(pageHref(res.id));
-		} catch (e) {
-			if (e instanceof ApiError && e.status === 409) conflictOpen = true;
-			else toast.error(e);
-		} finally {
-			saving = false;
+		if (hasConflictMarkers(text)) {
+			toast.show('Ci sono ancora parti in conflitto (<<<<<<< … >>>>>>>): scegli cosa tenere prima di salvare.', { error: true });
+			return;
 		}
+		if (text === initial && !isNew) return;
+		sync.save({ id, content: text, base, baseContent, summary, minor });
+		saved = true;
+		clearDraft();
+		toast.show(sync.online ? 'Pagina salvata' : 'Salvata sul dispositivo: verrà sincronizzata appena torni online');
+		goto(pageHref(id));
 	}
 
-	async function deletePage() {
+	function deletePage() {
 		deleteOpen = false;
-		saving = true;
-		try {
-			await savePage({ id, content: '', summary: summary || 'eliminata' });
-			saved = true;
-			clearDraft();
-			toast.show('Pagina eliminata');
-			goto(pageHref(getNs(id) || 'start'));
-		} catch (e) {
-			toast.error(e);
-		} finally {
-			saving = false;
-		}
+		sync.save({ id, content: '', base, baseContent, summary: summary || 'eliminata' });
+		saved = true;
+		clearDraft();
+		toast.show('Pagina eliminata');
+		goto(pageHref(getNs(id) || 'start'));
 	}
 
 	// --------------------------------------------------------------- editing
@@ -379,21 +375,13 @@
 			</button>
 		{/if}
 		<a class="btn text" href={pageHref(id)}>Annulla</a>
-		<button class="btn filled" onclick={() => save()} disabled={saving || uploading > 0 || (!dirty && !isNew)}>
-			<span class="icon">check</span>{saving ? 'Salvataggio…' : 'Salva'}
+		<button class="btn filled" onclick={() => save()} disabled={uploading > 0 || (!dirty && !isNew)}>
+			<span class="icon">check</span>Salva
 		</button>
 	</div>
 </div>
 
 <input bind:this={fileInput} type="file" multiple hidden onchange={() => fileInput.files && upload(fileInput.files)} />
-
-<Dialog bind:open={conflictOpen} title="Pagina modificata nel frattempo" icon="sync_problem">
-	<p>Qualcun altro ha salvato questa pagina mentre la stavi modificando. Puoi sovrascrivere la sua versione con la tua, oppure copiare il tuo testo e ricaricare la pagina per unire le modifiche a mano.</p>
-	{#snippet actions()}
-		<button class="btn text" onclick={() => { navigator.clipboard.writeText(text); saved = true; clearDraft(); location.reload(); }}>Copia e ricarica</button>
-		<button class="btn filled danger" onclick={() => { conflictOpen = false; save(true); }}>Sovrascrivi</button>
-	{/snippet}
-</Dialog>
 
 <Dialog bind:open={deleteOpen} title="Eliminare la pagina?" icon="delete">
 	<p>La pagina sparirà dal wiki, ma resterà nella cronologia e potrà essere ripristinata.</p>

@@ -3,9 +3,10 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import type { LayoutProps } from './$types';
 	import { page } from '$app/state';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, preloadCode } from '$app/navigation';
 	import { configured } from '#lib/supabase.ts';
 	import { session } from '#lib/session.svelte.ts';
+	import { sync } from '#lib/sync.svelte.ts';
 	import { MEETINGS_NS, href, nsTitle, pageHref, pageIndex } from '#lib/wiki.svelte.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 	import { ui } from '#lib/ui.svelte.ts';
@@ -13,6 +14,7 @@
 	import Snackbar from '#lib/components/Snackbar.svelte';
 	import SearchBar from '#lib/components/SearchBar.svelte';
 	import NewPageDialog from '#lib/components/NewPageDialog.svelte';
+	import SyncStatus from '#lib/components/SyncStatus.svelte';
 
 	let { children }: LayoutProps = $props();
 	let menuOpen = $state(false);
@@ -30,6 +32,23 @@
 	$effect(() => {
 		if (session.user && !pageIndex.loaded) pageIndex.load().catch((e) => toast.error(e));
 	});
+
+	// Send saves made while offline (or in a tab that was closed too early).
+	$effect(() => {
+		if (!session.user) return;
+		sync.start(session.user.id);
+		// Load every screen's code now, so the wiki keeps working if the connection drops
+		// (e.g. writing the verbale in a room with bad signal).
+		const routes = ['/', '/verbali', '/w/[...id]', '/edit/[...id]', '/history/[...id]', '/recent', '/search', '/index', '/account'] as const;
+		const timer = setTimeout(() => routes.forEach((r) => preloadCode(r).catch(() => {})), 1000);
+		return () => clearTimeout(timer);
+	});
+
+	function logout() {
+		const n = sync.entries.length;
+		if (n && !confirm(`${n === 1 ? 'Una modifica non è ancora online' : `${n} modifiche non sono ancora online`}. Restano su questo dispositivo e verranno inviate al prossimo accesso. Uscire comunque?`)) return;
+		session.logout();
+	}
 
 	afterNavigate(() => {
 		ui.drawerOpen = false;
@@ -133,6 +152,7 @@
 					<span class="icon">menu</span>
 				</button>
 				<SearchBar />
+				<SyncStatus />
 				<div class="account">
 					<button class="avatar" aria-label="Account" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
 						{initials || '?'}
@@ -147,7 +167,7 @@
 							<a class="list-item" role="menuitem" href={href('/account')}>
 								<span class="icon">key</span> Cambia password
 							</a>
-							<button class="list-item" role="menuitem" onclick={() => session.logout()}>
+							<button class="list-item" role="menuitem" onclick={logout}>
 								<span class="icon">logout</span> Esci
 							</button>
 						</div>
@@ -300,9 +320,12 @@
 	.menu {
 		display: none;
 	}
+	/* Search on the left, sync status and account pushed to the right. */
+	.topbar :global(.search) {
+		margin-right: auto;
+	}
 	.account {
 		position: relative;
-		margin-left: auto;
 	}
 	.avatar {
 		width: 40px;

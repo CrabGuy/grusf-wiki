@@ -9,12 +9,13 @@
 		pageHistory,
 		pageHref,
 		paramToId,
-		savePage,
+		saveBase,
 		type ChangeRow,
 		type Page
 	} from '#lib/wiki.svelte.ts';
 	import { diffLines } from '#lib/diff.ts';
 	import { toast } from '#lib/toast.svelte.ts';
+	import { sync } from '#lib/sync.svelte.ts';
 	import WikiContent from '#lib/components/WikiContent.svelte';
 	import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
 	import Dialog from '#lib/components/Dialog.svelte';
@@ -27,7 +28,6 @@
 	let oldText = $state<string | null>(null);
 	let mode = $state<'diff' | 'view'>('diff');
 	let restoreOpen = $state(false);
-	let busy = $state(false);
 
 	const TYPE: Record<string, { label: string; icon: string }> = {
 		C: { label: 'creata', icon: 'add_circle' },
@@ -60,19 +60,19 @@
 		goto(`${historyHref(id)}?rev=${rev}`, { replaceState: true });
 	}
 
-	async function restore() {
+	function restore() {
 		restoreOpen = false;
 		if (oldText === null || !selected) return;
-		busy = true;
-		try {
-			await savePage({ id, content: oldText, summary: `ripristinata la versione del ${formatRev(selected)}`, restore: true });
-			toast.show('Versione ripristinata');
-			goto(pageHref(id));
-		} catch (e) {
-			toast.error(e);
-		} finally {
-			busy = false;
-		}
+		sync.save({
+			id,
+			content: oldText,
+			base: saveBase(current),
+			baseContent: current?.content ?? '',
+			summary: `ripristinata la versione del ${formatRev(selected)}`,
+			restore: true
+		});
+		toast.show('Versione ripristinata');
+		goto(pageHref(id));
 	}
 </script>
 
@@ -123,7 +123,7 @@
 					</button>
 					<span class="spacer"></span>
 					{#if !isCurrent}
-						<button class="btn tonal" disabled={busy} onclick={() => (restoreOpen = true)}>
+						<button class="btn tonal" onclick={() => (restoreOpen = true)}>
 							<span class="icon">restore</span> Ripristina questa versione
 						</button>
 					{/if}

@@ -1,11 +1,16 @@
 import { resolve } from '$app/paths';
-import { supabase, callFunction } from './supabase';
+import { supabase } from './supabase';
+import { session } from './session.svelte';
+import { sync, type PendingSave } from './sync.svelte';
+
+export type { SaveBase } from './sync.svelte';
 import {
 	BUCKET,
 	MEETINGS_NS,
 	START_PAGE,
 	atticPath,
 	cleanId,
+	extractTitle,
 	getNs,
 	gunzip,
 	idToPath,
@@ -25,6 +30,9 @@ export interface PageMeta {
 export interface Page extends PageMeta {
 	content: string;
 	size: number;
+	/** Set when this is a local version not yet online. */
+	pendingKey?: string;
+	pending?: PendingSave['state'];
 }
 
 export interface ChangeRow {
@@ -63,8 +71,18 @@ export function paramToId(param: string | undefined): string {
 // ------------------------------------------------------------- page index
 
 class PageIndex {
-	pages = $state<PageMeta[]>([]);
+	#server = $state<PageMeta[]>([]);
 	loaded = $state(false);
+	/** Online pages with local, not yet synced saves applied on top. */
+	pages = $derived.by(() => {
+		if (!sync.entries.length) return this.#server;
+		const map = new Map(this.#server.map((p) => [p.id, p]));
+		for (const e of sync.entries) {
+			if (!e.content.trim()) map.delete(e.id);
+			else map.set(e.id, localMeta(e));
+		}
+		return [...map.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+	});
 	ids = $derived(new Set(this.pages.map((p) => p.id)));
 
 	async load() {
@@ -74,7 +92,7 @@ class PageIndex {
 			.order('id')
 			.limit(10000);
 		if (error) throw error;
-		this.pages = data ?? [];
+		this.#server = data ?? [];
 		this.loaded = true;
 	}
 
@@ -120,6 +138,22 @@ class PageIndex {
 
 export const pageIndex = new PageIndex();
 
+let reloadTimer: ReturnType<typeof setTimeout> | undefined;
+sync.onSynced = () => {
+	clearTimeout(reloadTimer);
+	reloadTimer = setTimeout(() => pageIndex.load().catch(() => {}), 300);
+};
+
+function localMeta(e: PendingSave): PageMeta {
+	return {
+		id: e.id,
+		title: extractTitle(e.id, e.content),
+		rev: Math.floor(e.queuedAt / 1000),
+		updated_at: new Date(e.queuedAt).toISOString(),
+		updated_by: session.profile?.username ?? null
+	};
+}
+
 /** Display name for a namespace: the title of its start page, or a prettified id. */
 export function nsTitle(ns: string): string {
 	const start = pageIndex.get(`${ns}:${START_PAGE}`);
@@ -130,23 +164,21 @@ export function nsTitle(ns: string): string {
 
 // ------------------------------------------------------------------ pages
 
+/** A page as this device sees it: a local version waiting to sync wins over the online one. */
 export async function getPage(id: string): Promise<Page | null> {
+	const local = sync.latest(id);
+	if (local) {
+		if (!local.content.trim()) return null;
+		return { ...localMeta(local), content: local.content, size: local.content.length, pendingKey: local.key, pending: local.state };
+	}
 	const { data, error } = await supabase.from('pages').select('*').eq('id', id).maybeSingle();
 	if (error) throw error;
 	return data;
 }
 
-export async function savePage(input: {
-	id: string;
-	content: string;
-	summary?: string;
-	minor?: boolean;
-	baseRev?: number | null;
-	restore?: boolean;
-}) {
-	const res = await callFunction<{ id: string; rev: number; unchanged: boolean }>('wiki', { action: 'save', ...input });
-	await pageIndex.load();
-	return res;
+/** What to pass as `base` when saving an edit of `page`. */
+export function saveBase(page: Page | null) {
+	return page?.pendingKey ?? page?.rev ?? null;
 }
 
 export async function search(q: string) {

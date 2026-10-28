@@ -9,14 +9,16 @@
 		noNs,
 		pageHref,
 		pageIndex,
-		paramToId
+		paramToId,
+		saveBase,
+		type SaveBase
 	} from '#lib/wiki.svelte.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 	import Editor from '#lib/components/Editor.svelte';
 
 	const id = $derived(paramToId(page.params.id) || START_PAGE);
 
-	let doc = $state<{ id: string; text: string; rev: number | null; isNew: boolean } | null>(null);
+	let doc = $state<{ id: string; text: string; base: SaveBase; baseContent: string; isNew: boolean } | null>(null);
 
 	$effect(() => {
 		const current = id;
@@ -34,7 +36,9 @@
 					text = `====== ${title || extractTitle(current, '')} ======\n\n`;
 				}
 			}
-			if (current === id) doc = { id: current, text, rev: existing?.rev ?? null, isNew: !existing };
+			if (current === id) {
+				doc = { id: current, text, base: saveBase(existing), baseContent: existing?.content ?? '', isNew: !existing };
+			}
 		})().catch((e) => toast.error(e));
 	});
 
@@ -53,7 +57,14 @@
 	</div>
 	{#if doc}
 		{#key doc.id}
-			<Editor id={doc.id} initial={doc.text} baseRev={doc.rev} isNew={doc.isNew} />
+			<Editor
+					id={doc.id}
+					initial={doc.text}
+					base={doc.base}
+					baseContent={doc.baseContent}
+					isNew={doc.isNew}
+					useDraft={page.url.searchParams.has('merge')}
+				/>
 		{/key}
 	{:else}
 		<div class="progress"></div>

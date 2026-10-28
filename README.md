@@ -19,7 +19,11 @@ exported back at any time.
   (`verbali:YYYY-MM-DD`) with the previous meeting's attendees and open to-dos already filled in.
   If the minutes for today already exist, the same button reopens them.
 - Editor with toolbar, live preview, automatic list continuation, Tab indent, Ctrl+S / Ctrl+B / Ctrl+I / Ctrl+K,
-  **paste or drag images** to upload them, local draft autosave, and edit-conflict detection.
+  **paste or drag images** to upload them, and local draft autosave.
+- **Instant, offline-friendly saving**: a save shows up right away and syncs in the background. Without a
+  connection, changes wait on the device (even across reloads) and are sent when it comes back. If two people
+  edit the same page, changes in different places are merged automatically; only edits to the same lines
+  ask which version to keep (or let you merge by hand).
 - Full DokuWiki syntax rendering (headings, tables with col/rowspan, lists, links, media, footnotes, code,
   `<note>` boxes...).
 - Full-text search (Italian stemming), instant title search (Ctrl+K or `/`), namespace index, recent changes,
@@ -43,6 +47,13 @@ Browser (static SvelteKit app on GitHub Pages)
          wiki  ......... saves a page: writes pages/ + attic/ + meta/ and updates the index
          admin ......... create/reset/delete users, change roles, rebuild the index
 ```
+
+Saving is local-first (`src/lib/sync.svelte.ts`): the editor puts the change in an outbox in
+`localStorage` and the app immediately shows that version everywhere (page, lists, index). A background worker
+sends the outbox to the `wiki` function in order, one browser tab at a time (Web Locks), retrying with backoff
+when offline. Each save carries the revision and the text it started from; when the page changed online in the
+meantime the function answers 409 and the client does a line-based three-way merge (`src/lib/merge.ts`) and
+sends the result, or asks the user when both sides touched the same lines. Images still upload directly.
 
 Security model:
 
