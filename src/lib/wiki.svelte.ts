@@ -298,9 +298,9 @@ export async function meetingTemplate(date: Date): Promise<string> {
 	];
 	if (todos) {
 		lines.push(
-			`===== Cose da fare dalla [[${prev!.id}|riunione precedente]] =====`,
+			'===== Cose da fare dalla riunione precedente =====',
 			'',
-			'Segna cosa è stato fatto con <del>barrato</del> o aggiorna la tabella.',
+			`Dal [[${prev!.id}|verbale precedente]]: segna cosa è stato fatto con <del>barrato</del> o aggiorna la tabella.`,
 			'',
 			todos,
 			''

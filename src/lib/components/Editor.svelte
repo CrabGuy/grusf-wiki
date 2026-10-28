@@ -62,11 +62,14 @@
 		}
 		if (!draft) {
 			ta.focus();
-			// Put the cursor somewhere useful: after the title of a new page.
+			// Put the cursor somewhere useful: first agenda item of a meeting, else after the title.
 			if (isNew) {
-				const pos = text.indexOf('\n\n') + 2;
-				ta.setSelectionRange(pos > 1 ? pos : text.length, pos > 1 ? pos : text.length);
+				const agenda = text.indexOf('  - \n');
+				const title = text.indexOf('\n\n');
+				const pos = agenda !== -1 ? agenda + 4 : title !== -1 ? title + 2 : text.length;
+				ta.setSelectionRange(pos, pos);
 			}
+			ta.scrollTop = 0;
 		}
 	});
 

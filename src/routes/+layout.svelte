@@ -241,7 +241,6 @@
 		position: relative;
 		overflow: hidden;
 		isolation: isolate;
-		flex: 1;
 	}
 	.nav-item::after {
 		content: '';
@@ -263,6 +262,9 @@
 		position: relative;
 		display: flex;
 		align-items: center;
+	}
+	.nav-row .nav-item {
+		flex: 1;
 	}
 	.nav-row .add {
 		position: absolute;
