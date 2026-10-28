@@ -1,0 +1,82 @@
+1735689600	127.0.0.1	C	associazione:contatti	sara	creata		78
+1735856820	127.0.0.1	E	associazione:contatti	luca	aggiunte decisioni		54
+1735983249	127.0.0.1	E	associazione:contatti	francesco	corretti refusi		99
+1736378634	127.0.0.1	E	associazione:contatti	francesco	completato		93
+1738756800	127.0.0.1	C	eventi:tipi:serata_film	sara	creata		92
+1738775619	127.0.0.1	E	eventi:tipi:serata_film	elena	aggiunte decisioni		74
+1739266193	127.0.0.1	E	eventi:tipi:serata_film	giulia	corretti refusi		215
+1741651200	127.0.0.1	C	eventi:tipi:gita	elena	creata		91
+1741922164	127.0.0.1	E	eventi:tipi:gita	luca	aggiunte decisioni		244
+1742295857	127.0.0.1	E	eventi:tipi:gita	marco	corretti refusi		326
+1742436541	127.0.0.1	E	eventi:tipi:gita	elena	completato		119
+1742558400	127.0.0.1	C	eventi:tipi:torneo	sara	creata		309
+1742683991	127.0.0.1	E	eventi:tipi:torneo	giulia	aggiunte decisioni		258
+1743292800	127.0.0.1	C	eventi:archivio:2026_torneo_calcetto	giulia	creata		95
+1743599020	127.0.0.1	E	eventi:archivio:2026_torneo_calcetto	luca	aggiunte decisioni		96
+1743994354	127.0.0.1	E	eventi:archivio:2026_torneo_calcetto	sara	corretti refusi		135
+1744466712	127.0.0.1	E	eventi:archivio:2026_torneo_calcetto	sara	completato		152
+1744588800	127.0.0.1	C	eventi:checklist	giulia	creata		327
+1745085261	127.0.0.1	E	eventi:checklist	marco	aggiunte decisioni		300
+1745107200	127.0.0.1	C	eventi:comunicazione	sara	creata		267
+1745296885	127.0.0.1	E	eventi:comunicazione	luca	aggiunte decisioni		337
+1745369441	127.0.0.1	E	eventi:checklist	luca	corretti refusi		264
+1745589777	127.0.0.1	E	eventi:comunicazione	elena	corretti refusi		192
+1745798400	127.0.0.1	C	eventi:permessi_e_sicurezza	giulia	creata		168
+1746270605	127.0.0.1	E	eventi:permessi_e_sicurezza	marco	aggiunte decisioni		172
+1746345465	127.0.0.1	E	eventi:permessi_e_sicurezza	giulia	corretti refusi		143
+1746576000	127.0.0.1	C	eventi:budget_e_rimborsi	giulia	creata		338
+1746787411	127.0.0.1	E	eventi:permessi_e_sicurezza	giulia	completato		258
+1747064489	127.0.0.1	E	eventi:budget_e_rimborsi	marco	aggiunte decisioni		449
+1747526400	127.0.0.1	C	eventi:fornitori	sara	creata		86
+1747872931	127.0.0.1	E	eventi:fornitori	francesco	aggiunte decisioni		93
+1748219057	127.0.0.1	E	eventi:fornitori	elena	corretti refusi		184
+1748503957	127.0.0.1	E	eventi:fornitori	marco	completato		184
+1748563200	127.0.0.1	C	wiki:sintassi	marco	creata		766
+1748980374	127.0.0.1	E	wiki:sintassi	luca	aggiunte decisioni		600
+1749487938	127.0.0.1	E	wiki:sintassi	marco	corretti refusi		567
+1749729600	127.0.0.1	C	associazione:direttivo	marco	creata		139
+1750076538	127.0.0.1	E	associazione:direttivo	francesco	aggiunte decisioni		155
+1750517225	127.0.0.1	E	associazione:direttivo	francesco	corretti refusi		231
+1750659960	127.0.0.1	E	associazione:direttivo	giulia	completato		154
+1751025600	127.0.0.1	C	eventi:tipi:cena_sociale	elena	creata		430
+1751520777	127.0.0.1	E	eventi:tipi:cena_sociale	elena	aggiunte decisioni		518
+1753401600	127.0.0.1	C	associazione:start	giulia	creata		214
+1753531200	127.0.0.1	C	associazione:statuto	elena	creata		207
+1753847821	127.0.0.1	E	associazione:statuto	marco	aggiunte decisioni		248
+1753897053	127.0.0.1	E	associazione:start	sara	aggiunte decisioni		25
+1754006400	127.0.0.1	C	eventi:organizzare_un_evento	marco	creata		1141
+1754327908	127.0.0.1	E	eventi:organizzare_un_evento	luca	aggiunte decisioni		983
+1754332893	127.0.0.1	E	associazione:start	elena	corretti refusi		66
+1754337879	127.0.0.1	E	associazione:statuto	marco	corretti refusi		332
+1755604800	127.0.0.1	C	start	giulia	creata		294
+1755992257	127.0.0.1	E	start	elena	aggiunte decisioni		248
+1756267797	127.0.0.1	E	start	giulia	corretti refusi		303
+1756302044	127.0.0.1	E	start	francesco	completato		288
+1757376000	127.0.0.1	C	eventi:archivio:2025_castagnata	luca	creata		219
+1757472373	127.0.0.1	E	eventi:archivio:2025_castagnata	marco	aggiunte decisioni		325
+1758628800	127.0.0.1	C	eventi:tipi:conferenza	luca	creata		122
+1759017600	127.0.0.1	C	eventi:tipi:start	sara	creata		350
+1759040648	127.0.0.1	E	eventi:tipi:conferenza	giulia	aggiunte decisioni		248
+1759200706	127.0.0.1	E	eventi:tipi:conferenza	giulia	corretti refusi		227
+1759223422	127.0.0.1	E	eventi:tipi:conferenza	sara	completato		146
+1759537073	127.0.0.1	E	eventi:tipi:start	francesco	aggiunte decisioni		454
+1761436800	127.0.0.1	C	verbali:start	luca	creata		207
+1761480000	127.0.0.1	C	eventi:start	giulia	creata		412
+1761825097	127.0.0.1	E	eventi:start	marco	aggiunte decisioni		322
+1761906223	127.0.0.1	E	verbali:start	sara	aggiunte decisioni		194
+1762399559	127.0.0.1	E	verbali:start	giulia	corretti refusi		270
+1781132400	127.0.0.1	C	verbali:2026-06-10_assemblea	elena	creata		289
+1781612623	127.0.0.1	E	verbali:2026-06-10_assemblea	elena	aggiunte decisioni		262
+1781649115	127.0.0.1	E	verbali:2026-06-10_assemblea	elena	corretti refusi		347
+1789513200	127.0.0.1	C	verbali:2026-09-15	marco	creata		243
+1790025184	127.0.0.1	E	verbali:2026-09-15	luca	aggiunte decisioni		240
+1790438980	127.0.0.1	E	verbali:2026-09-15	francesco	corretti refusi		298
+1790722800	127.0.0.1	C	verbali:2026-09-29	luca	creata		286
+1791197420	127.0.0.1	E	verbali:2026-09-29	marco	aggiunte decisioni		321
+1791421178	127.0.0.1	E	verbali:2026-09-29	elena	corretti refusi		295
+1791932400	127.0.0.1	C	verbali:2026-10-13	sara	creata		374
+1792239349	127.0.0.1	E	verbali:2026-10-13	francesco	aggiunte decisioni		495
+1792438814	127.0.0.1	E	verbali:2026-10-13	marco	corretti refusi		378
+1793132800	127.0.0.1	C	verbali:2026-10-27	luca	creata		339
+1793136400	127.0.0.1	E	verbali:2026-10-27	luca	aggiunte decisioni		642
+1793140000	127.0.0.1	E	verbali:2026-10-27	elena	corretti refusi		478

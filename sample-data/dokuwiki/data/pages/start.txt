@@ -1,0 +1,17 @@
+====== Benvenuti nel wiki del GRUSF ======
+
+Questo è il wiki interno del **Gruppo Universitari San Frediano**. Qui raccogliamo tutto quello che serve per far funzionare l'associazione: come si organizza un evento, cosa abbiamo imparato dagli eventi passati e i verbali delle nostre riunioni.
+
+<note>Tutti i contenuti di questa installazione sono **dati di esempio**. Verranno sostituiti con i contenuti del vecchio wiki.</note>
+
+===== Da dove iniziare =====
+
+  * [[verbali:start|Verbali delle riunioni]] - l'ultimo verbale è sempre in cima
+  * [[eventi:organizzare_un_evento|Come organizzare un evento]] - la guida passo passo
+  * [[eventi:checklist|Checklist evento]] - da stampare o copiare
+  * [[eventi:tipi:start|Tipi di evento]] - cene, gite, conferenze, tornei...
+  * [[associazione:start|L'associazione]] - statuto, direttivo, contatti
+
+===== Come contribuire =====
+
+Chiunque abbia un account può modificare qualsiasi pagina. Se non sai come si scrive una pagina, dai un'occhiata alla [[wiki:sintassi|guida alla sintassi]]. Non aver paura di sbagliare: ogni modifica viene salvata nella cronologia e può essere annullata.

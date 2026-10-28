@@ -1,0 +1,9 @@
+====== Fornitori e contatti utili ======
+
+<note>Nomi e numeri sono di esempio.</note>
+
+^ Cosa             ^ Chi                ^ Contatto     ^ Note                             ^
+| Pizza da asporto | Pizzeria Esempio   | 050 000 0000 | sconto per ordini > 20 pizze     |
+| Noleggio pullman | Autolinee Esempio  | 050 000 0001 | chiedere preventivo 1 mese prima |
+| Impianto audio   | Parrocchia         | segreteria   | casse e mixer nell'armadio       |
+| Stampa locandine | Copisteria Esempio | 050 000 0002 | formato A3, carta 120 g          |

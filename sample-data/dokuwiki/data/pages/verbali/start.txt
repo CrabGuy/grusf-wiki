@@ -1,0 +1,12 @@
+====== Verbali delle riunioni ======
+
+Qui trovi i verbali delle riunioni del direttivo e delle assemblee. Ogni verbale è una pagina chiamata con la data della riunione, per esempio ''verbali:2026-10-27''.
+
+L'elenco dei verbali si aggiorna da solo. Per scriverne uno nuovo usa il pulsante **Nuovo verbale**: la pagina si crea già con la struttura giusta.
+
+===== Come si scrive un buon verbale =====
+
+  * Scrivi **chi c'era**.
+  * Per ogni punto dell'ordine del giorno: cosa si è detto in breve e **cosa si è deciso**.
+  * Le cose da fare vanno in tabella con **chi** e **entro quando**.
+  * Non serve scrivere tutto parola per parola: bastano le decisioni e i motivi.

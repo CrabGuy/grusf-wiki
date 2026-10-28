@@ -1,0 +1,22 @@
+====== Budget e rimborsi ======
+
+===== Prima dell'evento =====
+
+Ogni evento ha un **budget massimo** approvato dal direttivo. Se pensi di superarlo, chiedi prima, non dopo.
+
+Un budget tipico per una cena da 60 persone:
+
+^ Voce              ^ Costo stimato ^
+| Spesa alimentare  | 250 €         |
+| Bevande           | 80 €          |
+| Piatti, bicchieri | 30 €          |
+| Imprevisti (10%)  | 36 €          |
+^ Totale            ^ 396 €         ^
+
+===== Rimborsi =====
+
+  - Paga e **conserva lo scontrino** (meglio la fattura intestata all'associazione).
+  - Fotografa lo scontrino e mandalo al tesoriere entro 7 giorni.
+  - Il tesoriere rimborsa con bonifico entro fine mese.
+
+<note>Senza scontrino niente rimborso: non è cattiveria, è il bilancio che deve tornare.</note>

@@ -1,0 +1,53 @@
+# Builds the static site and publishes it on GitHub Pages at every push to main.
+# Needs two repository variables (Settings > Secrets and variables > Actions > Variables):
+#   SUPABASE_URL              https://<project-ref>.supabase.co
+#   SUPABASE_PUBLISHABLE_KEY  sb_publishable_...   (public by design, protected by RLS)
+# Optional: BASE_PATH (default `/<repo-name>`; set to `/` when using a custom domain).
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+        env:
+          BASE_PATH: ${{ vars.BASE_PATH == '/' && '' || vars.BASE_PATH || format('/{0}', github.event.repository.name) }}
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: build
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

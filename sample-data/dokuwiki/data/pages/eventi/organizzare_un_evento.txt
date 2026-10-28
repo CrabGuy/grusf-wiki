@@ -1,0 +1,45 @@
+====== Come organizzare un evento ======
+
+Questa guida raccoglie l'esperienza di chi ha organizzato eventi negli anni passati. Non è una legge: è un punto di partenza. Se scopri qualcosa di nuovo, **aggiornala**!
+
+===== 1. L'idea (6-8 settimane prima) =====
+
+  * Proponi l'idea in riunione o nel gruppo del direttivo.
+  * Rispondi a tre domande:
+    - **Per chi è?** Matricole, soci, tutta la parrocchia, esterni?
+    - **Cosa vogliamo ottenere?** Divertimento, raccolta fondi, formazione, nuovi soci?
+    - **Quanto costa al massimo?** Anche una stima grossolana va bene.
+  * Fai approvare l'idea e il budget massimo dal direttivo (va messo a [[verbali:start|verbale]]).
+
+===== 2. La squadra (5-6 settimane prima) =====
+
+Serve sempre un **responsabile** unico, che non deve fare tutto ma deve sapere tutto. Poi, a seconda dell'evento:
+
+^ Ruolo         ^ Cosa fa                                 ^
+| Logistica     | sala, materiali, allestimento e pulizia |
+| Cibo          | spesa, cucina o catering, allergie      |
+| Comunicazione | locandina, social, passaparola          |
+| Cassa         | biglietti, incassi, scontrini, rimborsi |
+
+===== 3. Luogo e data (4-5 settimane prima) =====
+
+  * Controlla il calendario universitario: **evita le sessioni d'esame**.
+  * Controlla il calendario della parrocchia per la sala.
+  * Prenota e fatti dare una conferma scritta (anche un messaggio va bene).
+  * Se serve, chiedi i [[permessi_e_sicurezza|permessi]].
+
+===== 4. Comunicazione (3 settimane prima) =====
+
+Vedi [[comunicazione]]. In breve: locandina pronta 3 settimane prima, post sui social 2 settimane prima, promemoria 2 giorni prima.
+
+===== 5. La settimana dell'evento =====
+
+  * Ripassa la [[checklist]].
+  * Conferma numeri e turni a tutti i volontari.
+  * Prepara il fondo cassa.
+
+===== 6. Dopo l'evento =====
+
+  * Pulizia e restituzione delle chiavi **la sera stessa**.
+  * Raccogli scontrini e chiudi i conti entro una settimana (vedi [[budget_e_rimborsi]]).
+  * Scrivi un breve resoconto nell'[[start#archivio|archivio]]: cosa è andato bene, cosa cambieresti. È la parte più utile per chi verrà dopo di te.

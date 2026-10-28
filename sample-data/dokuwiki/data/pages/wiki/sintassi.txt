@@ -1,0 +1,61 @@
+====== Guida alla sintassi ======
+
+Il wiki usa la sintassi di [[https://www.dokuwiki.org/it:wiki:syntax|DokuWiki]]. Nell'editor trovi dei pulsanti per le cose più comuni, ma ecco un riassunto.
+
+===== Formattazione =====
+
+^ Scrivi                                    ^ Ottieni               ^
+| ''<nowiki>**grassetto**</nowiki>''        | **grassetto**         |
+| ''<nowiki>//corsivo//</nowiki>''          | //corsivo//           |
+| ''<nowiki>__sottolineato__</nowiki>''     | __sottolineato__      |
+| ''<nowiki>''monospazio''</nowiki>''       | ''monospazio''        |
+| ''<nowiki><del>barrato</del></nowiki>''   | <del>barrato</del>    |
+
+===== Titoli =====
+
+Più segni di uguale = titolo più importante:
+
+<code>
+====== Titolo pagina ======
+===== Sezione =====
+==== Sottosezione ====
+=== Paragrafo ===
+</code>
+
+===== Link =====
+
+  * Link interno: ''<nowiki>[[eventi:checklist]]</nowiki>'' → [[eventi:checklist]]
+  * Con testo: ''<nowiki>[[eventi:checklist|la checklist]]</nowiki>'' → [[eventi:checklist|la checklist]]
+  * Link esterno: ''<nowiki>[[https://www.unipi.it|Università di Pisa]]</nowiki>'' → [[https://www.unipi.it|Università di Pisa]]
+
+===== Elenchi =====
+
+Due spazi e poi ''*'' (puntato) o ''-'' (numerato). Più spazi = elenco annidato.
+
+<code>
+  * primo punto
+  * secondo punto
+    * sotto-punto
+  - primo passo
+  - secondo passo
+</code>
+
+===== Immagini =====
+
+''<nowiki>{{wiki:logo.svg?120|Logo}}</nowiki>'' → {{wiki:logo.svg?120|Logo}}
+
+Nell'editor puoi anche **incollare** o **trascinare** un'immagine: viene caricata e inserita automaticamente.
+
+===== Tabelle =====
+
+<code>
+^ Intestazione 1 ^ Intestazione 2 ^
+| cella          | cella          |
+</code>
+
+===== Altro =====
+
+  * Citazione: inizia la riga con ''>''
+  * Linea orizzontale: ''----''
+  * Nota a piè di pagina: ''<nowiki>((testo della nota))</nowiki>''((Proprio così.))
+  * A capo forzato: ''<nowiki>\\</nowiki>'' seguito da uno spazio

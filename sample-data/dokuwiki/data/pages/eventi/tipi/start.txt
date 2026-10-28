@@ -1,0 +1,12 @@
+====== Tipi di evento ======
+
+I format che organizziamo più spesso. Ogni scheda dice quante persone servono, quanto costa di solito e a cosa stare attenti.
+
+^ Evento                          ^ Quando di solito  ^ Persone coinvolte ^ Costo indicativo ^
+| [[cena_sociale|Cena sociale]]   | 2-3 volte l'anno  | 4-6               | 300-500 €        |
+| [[gita|Gita]]                   | primavera         | 3-4               | autofinanziata   |
+| [[conferenza|Conferenza]]       | 1-2 volte l'anno  | 3                 | 0-150 €          |
+| [[torneo|Torneo sportivo]]      | maggio            | 4                 | 50-100 €         |
+| [[serata_film|Serata film]]     | ogni mese         | 2                 | 20 €             |
+
+Hai un'idea nuova? Crea una pagina in questa sezione e raccontala!

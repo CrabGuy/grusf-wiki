@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 424" width="300" height="424" font-family="sans-serif">
+  <rect width="300" height="424" fill="#faf4ed"/>
+  <rect x="0" y="0" width="300" height="170" fill="#d7827e"/>
+  <circle cx="230" cy="70" r="46" fill="#ea9d34" opacity="0.85"/>
+  <circle cx="70" cy="120" r="30" fill="#b4637a" opacity="0.7"/>
+  <text x="24" y="60" font-size="15" fill="#fffaf3" font-weight="600">GRUSF presenta</text>
+  <text x="24" y="100" font-size="34" fill="#fffaf3" font-weight="800">Castagnata</text>
+  <text x="24" y="205" font-size="22" fill="#575279" font-weight="700">Sabato 7 novembre</text>
+  <text x="24" y="232" font-size="16" fill="#797593">ore 19:00 · cortile della parrocchia</text>
+  <text x="24" y="280" font-size="15" fill="#575279">Castagne, vin brulé e dolci fatti in casa</text>
+  <text x="24" y="304" font-size="15" fill="#575279">Quota: 5 € (ricavato alla Caritas)</text>
+  <rect x="24" y="330" width="170" height="38" rx="19" fill="#286983"/>
+  <text x="109" y="354" font-size="14" fill="#fffaf3" text-anchor="middle" font-weight="600">Iscriviti sul gruppo</text>
+  <text x="276" y="406" font-size="13" fill="#9893a5" text-anchor="end" font-weight="700">GRUSF</text>
+</svg>

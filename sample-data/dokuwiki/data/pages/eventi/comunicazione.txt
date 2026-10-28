@@ -1,0 +1,22 @@
+====== Comunicazione e social ======
+
+===== Tempistiche =====
+
+^ Quando            ^ Cosa                                        ^
+| 3 settimane prima | locandina pronta e approvata                |
+| 2 settimane prima | post Instagram + messaggio nei gruppi       |
+| 1 settimana prima | storia con countdown, passaparola a lezione |
+| 2 giorni prima    | promemoria                                  |
+| dopo l'evento     | foto e ringraziamenti                       |
+
+===== Locandina =====
+
+  * Parti dal modello qui sotto.
+  * Sempre presenti: **cosa, quando, dove, quanto costa, come iscriversi**.
+  * Logo GRUSF in basso.
+
+{{eventi:locandina_esempio.svg?300|Esempio di locandina}}
+
+===== Foto =====
+
+Chiedi sempre il consenso prima di pubblicare foto in cui le persone sono riconoscibili.

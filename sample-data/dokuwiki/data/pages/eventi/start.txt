@@ -1,0 +1,23 @@
+====== Eventi ======
+
+Tutto quello che serve sapere per organizzare un evento GRUSF.
+
+===== Guide =====
+
+  * [[organizzare_un_evento|Come organizzare un evento]] - dall'idea al bilancio finale
+  * [[checklist|Checklist evento]]
+  * [[budget_e_rimborsi|Budget e rimborsi]]
+  * [[comunicazione|Comunicazione e social]]
+  * [[permessi_e_sicurezza|Permessi e sicurezza]]
+  * [[fornitori|Fornitori e contatti utili]]
+
+===== Tipi di evento =====
+
+Vedi [[.tipi:start|tipi di evento]] per le schede di ogni format che facciamo di solito.
+
+===== Archivio =====
+
+Resoconti degli eventi passati, con cosa è andato bene e cosa no:
+
+  * [[.archivio:2025_castagnata|Castagnata 2025]]
+  * [[.archivio:2026_torneo_calcetto|Torneo di calcetto 2026]]

@@ -1,0 +1,11 @@
+====== Direttivo e incarichi ======
+
+Anno accademico 2026/2027, eletto nell'[[verbali:2026-06-10_assemblea|assemblea del 10 giugno 2026]].
+
+^ Incarico        ^ Nome      ^ Di cosa si occupa                          ^
+| Presidente      | Giulia    | rappresenta l'associazione, coordina       |
+| Vicepresidente  | Luca      | sostituisce la presidente, eventi sportivi |
+| Tesoriera       | Elena     | conti, quote, rimborsi                     |
+| Segretaria      | Sara      | verbali, elenco soci                       |
+| Comunicazione   | Marco     | social, locandine                          |
+| Wiki            | Francesco | questo sito, account                       |
