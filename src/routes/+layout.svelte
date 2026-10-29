@@ -118,9 +118,9 @@
 				<p class="nav-label label-m">Sezioni</p>
 				{#each sections as ns (ns)}
 					{@const p = pageHref(ns)}
-					<a class="nav-item" class:active={isActive(p)} href={p}>
+					<a class="nav-item" class:active={isActive(p)} href={p} title={nsTitle(ns)}>
 						<span class="icon" class:filled={isActive(p)}>{NS_ICONS[ns] ?? 'folder'}</span>
-						{nsTitle(ns)}
+						<span class="label">{nsTitle(ns)}</span>
 					</a>
 				{/each}
 			{/if}
@@ -273,6 +273,12 @@
 	}
 	.nav-item:hover::after {
 		opacity: 0.06;
+	}
+	.nav-item .label {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
 	}
 	.nav-item.active {
 		background: var(--md-secondary-container);
