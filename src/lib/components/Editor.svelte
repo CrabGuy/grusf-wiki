@@ -64,15 +64,15 @@
 		}
 		if (!draft) {
 			ta.focus();
-			// Put the cursor somewhere useful: first agenda item of a meeting, else after the title.
+			// Put the cursor somewhere useful (see below).
 			const marker = text.indexOf('<<<<<<< ');
 			if (useDraft && marker !== -1) {
 				ta.value = text;
 				ta.setSelectionRange(marker, marker);
 			} else if (isNew) {
+				// First empty agenda item if there is one, else the end (after the title or the attendees).
 				const agenda = text.indexOf('  - \n');
-				const title = text.indexOf('\n\n');
-				const pos = agenda !== -1 ? agenda + 4 : title !== -1 ? title + 2 : text.length;
+				const pos = agenda !== -1 ? agenda + 4 : text.length;
 				ta.setSelectionRange(pos, pos);
 			}
 			ta.scrollTop = 0;

@@ -17,7 +17,8 @@
 		"create-admin": "node scripts/create-admin.ts",
 		"import": "node scripts/import-dokuwiki.ts",
 		"import:sample": "node scripts/import-dokuwiki.ts sample-data/dokuwiki",
-		"export": "node scripts/export-dokuwiki.ts"
+		"export": "node scripts/export-dokuwiki.ts",
+		"thumbs": "node scripts/thumbs.ts"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^4.0.0",
@@ -26,6 +27,7 @@
 		"@types/node": "^26.6.5",
 		"bcryptjs": "^3.0.3",
 		"dotenv": "^18.0.9",
+		"sharp": "^0.34.5",
 		"supabase": "^2.122.0",
 		"svelte": "^5.57.1",
 		"svelte-check": "^4.6.0",

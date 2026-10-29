@@ -8,13 +8,16 @@ import {
 	BUCKET,
 	MEETINGS_NS,
 	START_PAGE,
+	THUMB_MAX,
 	atticPath,
 	cleanId,
 	extractTitle,
 	getNs,
 	gunzip,
 	idToPath,
-	mediaPath
+	mediaPath,
+	thumbPath,
+	wantsThumb
 } from '../../supabase/functions/_shared/wiki-core';
 
 export * from '../../supabase/functions/_shared/wiki-core';
@@ -217,18 +220,18 @@ export async function getRevision(id: string, rev: number): Promise<string | nul
 
 const urlCache = new Map<string, { url: string; expires: number }>();
 
-/** Signed URLs for private media, cached for most of their lifetime. */
-export async function mediaUrls(ids: string[]): Promise<Map<string, string>> {
+/** Signed URLs for private files (storage paths), cached for most of their lifetime. */
+async function signedUrls(paths: string[]): Promise<Map<string, string>> {
 	const now = Date.now();
 	const out = new Map<string, string>();
 	const missing: string[] = [];
-	for (const id of new Set(ids)) {
-		const c = urlCache.get(id);
-		if (c && c.expires > now) out.set(id, c.url);
-		else missing.push(id);
+	for (const p of new Set(paths)) {
+		const c = urlCache.get(p);
+		if (c && c.expires > now) out.set(p, c.url);
+		else missing.push(p);
 	}
 	if (missing.length) {
-		const { data } = await supabase.storage.from(BUCKET).createSignedUrls(missing.map(mediaPath), 3600);
+		const { data } = await supabase.storage.from(BUCKET).createSignedUrls(missing, 3600);
 		data?.forEach((d, i) => {
 			if (!d.signedUrl) return;
 			urlCache.set(missing[i], { url: d.signedUrl, expires: now + 50 * 60 * 1000 });
@@ -236,6 +239,50 @@ export async function mediaUrls(ids: string[]): Promise<Map<string, string>> {
 		});
 	}
 	return out;
+}
+
+/** Signed URLs of the original media files. */
+export async function mediaUrls(ids: string[]): Promise<Map<string, string>> {
+	const urls = await signedUrls(ids.map(mediaPath));
+	return new Map(ids.flatMap((id) => (urls.has(mediaPath(id)) ? [[id, urls.get(mediaPath(id))!]] : [])));
+}
+
+/** Images known to have no web-size copy (small, or a format that isn't resized). */
+const noThumb = new Set<string>();
+
+/** URLs to show images with: the web-size copy when there is one, else the original. */
+export async function imageUrls(ids: string[]): Promise<Map<string, string>> {
+	const candidates = ids.filter((id) => !noThumb.has(id) && wantsThumb(id, Infinity));
+	const thumbs = candidates.length ? await signedUrls(candidates.map(thumbPath)) : new Map<string, string>();
+	const out = new Map<string, string>();
+	const originals: string[] = [];
+	for (const id of ids) {
+		const t = thumbs.get(thumbPath(id));
+		if (t) out.set(id, t);
+		else {
+			noThumb.add(id);
+			originals.push(id);
+		}
+	}
+	if (originals.length) for (const [id, url] of await mediaUrls(originals)) out.set(id, url);
+	return out;
+}
+
+/** Resize a large image in the browser and store its web-size copy. */
+async function uploadThumb(id: string, file: File) {
+	if (!wantsThumb(file.name, file.size)) return;
+	const bitmap = await createImageBitmap(file);
+	const scale = Math.min(1, THUMB_MAX / Math.max(bitmap.width, bitmap.height));
+	const canvas = document.createElement('canvas');
+	canvas.width = Math.round(bitmap.width * scale);
+	canvas.height = Math.round(bitmap.height * scale);
+	canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+	bitmap.close();
+	const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/webp', 0.82));
+	// Browsers without WebP encoding hand back a PNG, which would not be smaller.
+	if (!blob || blob.type !== 'image/webp' || blob.size >= file.size) return;
+	const { error } = await supabase.storage.from(BUCKET).upload(thumbPath(id), blob, { contentType: 'image/webp', cacheControl: '3600' });
+	if (!error) noThumb.delete(id);
 }
 
 /** Upload an image/attachment into the page's namespace. Returns the media id. */
@@ -250,7 +297,11 @@ export async function uploadMedia(ns: string, file: File): Promise<string> {
 		const { error } = await supabase.storage
 			.from(BUCKET)
 			.upload(mediaPath(id), file, { upsert: false, contentType: file.type || undefined });
-		if (!error) return id;
+		if (!error) {
+			// The copy is a nicety: if it fails the page simply shows the original.
+			await uploadThumb(id, file).catch(() => {});
+			return id;
+		}
 		if (!/exists|duplicate/i.test(error.message)) throw error;
 	}
 	throw new Error('Impossibile caricare il file');
@@ -266,7 +317,6 @@ export async function listMedia(ns: string) {
 // --------------------------------------------------------------- meetings
 
 const dateFmt = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
-const shortFmt = new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 export function meetingDate(id: string): Date | null {
 	const m = id.match(/(\d{4})-(\d{2})-(\d{2})/);
@@ -282,77 +332,39 @@ export function isoDate(d: Date) {
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** First free page id for a meeting on `date` (`verbali:2026-10-28`, then `_2`, ...). */
+/** Page id for a new RT verbale on `date`, following the existing convention (`verbali:2026-10-27_rt`). */
 export function meetingId(date: Date): string {
-	const base = `${MEETINGS_NS}:${isoDate(date)}`;
+	const base = `${MEETINGS_NS}:${isoDate(date)}_rt`;
 	if (!pageIndex.exists(base)) return base;
 	for (let n = 2; ; n++) if (!pageIndex.exists(`${base}_${n}`)) return `${base}_${n}`;
 }
 
-/** Today's meeting page if it already exists. */
+/** Today's verbale if it already exists. */
 export function todaysMeeting(): PageMeta | undefined {
-	return pageIndex.get(`${MEETINGS_NS}:${isoDate(new Date())}`);
+	const today = `${MEETINGS_NS}:${isoDate(new Date())}`;
+	return pageIndex.get(`${today}_rt`) ?? pageIndex.get(today);
+}
+
+// Verbali are written by different people: "Presenti:", "**Presenti**:", "**PRESENTI**:",
+// "  * **Presenti:** ..." and "  ***presenti**:" (a list item without the space).
+const ATTENDEES = /^[ \t]*(?:[*-][ \t]*)?(?:\*\*|\/\/)?presenti[ \t]*(?:\*\*|\/\/)?[ \t]*:[ \t]*(?:\*\*|\/\/)?[ \t]*(\S.*)$/im;
+
+/** Attendees line of a verbale, whichever way it was written. */
+export function attendeesOf(text: string): string {
+	return text.match(ATTENDEES)?.[1]?.trim() ?? '';
 }
 
 /**
- * A ready-to-fill meeting template. Attendees and open to-dos are copied
- * from the previous meeting so the secretary only has to adjust them.
+ * A new RT verbale in the style the existing ones use, with the attendees of the previous RT
+ * already filled in so whoever writes it only has to adjust them.
  */
 export async function meetingTemplate(date: Date): Promise<string> {
-	const prev = pageIndex.meetings.find((m) => m.date && m.date < new Date(isoDate(date) + 'T23:59'));
-	let attendees = '';
-	let todos = '';
-	if (prev) {
-		const page = await getPage(prev.id);
-		const text = page?.content ?? '';
-		attendees = text.match(/\*\*Presenti:\*\*[ \t]*(.*)/)?.[1]?.trim() ?? '';
-		const todo = text.match(/^=+\s*Cose da fare\s*=+\s*\n([\s\S]*?)(?=^=+.*=+\s*$|$(?![\s\S]))/m)?.[1]?.trim();
-		if (todo && /^\|/m.test(todo)) todos = todo;
-	}
-	const lines = [
-		`====== Riunione del ${formatDate(date)} ======`,
-		'',
-		`  * **Data:** ${shortFmt.format(date)}, ore 21:00`,
-		'  * **Luogo:** sala parrocchiale',
-		`  * **Presenti:** ${attendees}`,
-		'  * **Assenti:** ',
-		'  * **Verbalizza:** ',
-		'',
-		'===== Ordine del giorno =====',
-		'',
-		'  - ',
-		'',
-		'===== Discussione =====',
-		'',
-		'==== 1. ====',
-		'',
-		''
-	];
-	if (todos) {
-		lines.push(
-			'===== Cose da fare dalla riunione precedente =====',
-			'',
-			`Dal [[${prev!.id}|verbale precedente]]: segna cosa è stato fatto con <del>barrato</del> o aggiorna la tabella.`,
-			'',
-			todos,
-			''
-		);
-	}
-	lines.push(
-		'===== Decisioni =====',
-		'',
-		'  * ',
-		'',
-		'===== Cose da fare =====',
-		'',
-		'^ Cosa ^ Chi ^ Entro ^',
-		'|      |     |       |',
-		'',
-		'===== Prossima riunione =====',
-		'',
-		''
-	);
-	return lines.join('\n');
+	const before = pageIndex.meetings.filter((m) => m.date && m.date < new Date(isoDate(date) + 'T00:00'));
+	const prev = before.find((m) => /_rt(_\d+)?$/.test(m.id)) ?? before[0];
+	const attendees = prev ? attendeesOf((await getPage(prev.id))?.content ?? '') : '';
+	const weekday = new Intl.DateTimeFormat('it-IT', { weekday: 'long' }).format(date);
+	const heading = `**VERBALE RT ${weekday} ${formatDate(date)}**`.toUpperCase();
+	return [heading, '', `**PRESENTI**: ${attendees}`, '', ''].join('\n');
 }
 
 // ------------------------------------------------------------------ misc

@@ -43,6 +43,7 @@ Browser (static SvelteKit app on GitHub Pages)
    │                       attic/<ns>/<page>.<rev>.txt.gz   every revision
    │                       meta/<ns>/<page>.changes  DokuWiki changelog
    │                       media/<ns>/<file>         images and attachments
+   │                       cache/media/<ns>/<file>.webp  web-size copies of large images
    └── Edge Functions
          wiki  ......... saves a page: writes pages/ + attic/ + meta/ and updates the index
          admin ......... create/reset/delete users, change roles, rebuild the index
@@ -125,6 +126,9 @@ npm run import -- path/to/dokuwiki --users --replace   # wipe the current conten
   if you want a copy), and accounts that already exist take the DokuWiki password and name (admins stay admins).
 - With `--users`, bcrypt passwords (the DokuWiki default) are kept, so people log in with their old password.
   Members of the `admin` group become admins. Accounts with older hash formats get a new password, printed at the end.
+- Large images get a web-size copy (`cache/media/<path>.webp`, max 1600 px) so pages load fast; the original in
+  `media/` is never changed and opens on click. New uploads get one in the browser. The import makes them; for files
+  added another way run `npm run thumbs`.
 - Already uploaded files to the bucket by hand (Supabase dashboard → Storage)? Use **Utenti → Ricostruisci l'indice**.
 
 `sample-data/dokuwiki/` shows the expected layout. Its content is made up.

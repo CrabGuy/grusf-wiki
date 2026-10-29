@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { adminClient, siteUrl } from './_client.ts';
+import { generateThumbs } from './_thumbs.ts';
 import {
 	BUCKET,
 	cleanUsername,
@@ -97,7 +98,8 @@ const sb = adminClient();
 
 if (replace) {
 	console.log('Elimino il contenuto attuale del wiki…');
-	for (const folder of FOLDERS) {
+	// cache/ holds the web-size image copies, made again below.
+	for (const folder of [...FOLDERS, 'cache']) {
 		const old = (await listAll(sb, folder)).map((f) => f.name);
 		for (let i = 0; i < old.length; i += 100) {
 			const { error } = await sb.storage.from(BUCKET).remove(old.slice(i, i + 100));
@@ -134,6 +136,8 @@ console.log(failed ? `\n${failed} file non caricati` : '\nTutti i file caricati'
 console.log('Ricostruisco l’indice…');
 const res = await reindex(sb, (m) => console.log(`  ${m}`));
 console.log(`Indice: ${res.pages} pagine, ${res.changes} modifiche`);
+
+await generateThumbs(sb, { log: (m) => !m.startsWith('  ✓') && console.log(m) });
 
 if (withUsers) await importUsers();
 

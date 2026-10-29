@@ -81,6 +81,21 @@ export function mediaPath(id: string): string {
 	return `media/${idToPath(id)}`;
 }
 
+// Web-size copies of large images, like DokuWiki's resized-image cache. The original in media/
+// is never touched; pages show the copy and link to the original.
+export const THUMB_MAX = 1600;
+export const THUMB_MIN_BYTES = 300_000;
+const RESIZABLE = /\.(png|jpe?g|webp|bmp)$/i;
+
+export function thumbPath(id: string): string {
+	return `cache/media/${idToPath(id)}.webp`;
+}
+
+/** Whether an image is big enough to be worth a web-size copy. */
+export function wantsThumb(name: string, bytes: number): boolean {
+	return RESIZABLE.test(name) && bytes > THUMB_MIN_BYTES;
+}
+
 /** `pages/a/b.txt` -> `a:b` */
 export function pathToId(path: string): string {
 	return path
@@ -294,8 +309,8 @@ function changeRow(c: Change) {
 }
 
 /** Recursively list every file under a prefix of the bucket. */
-export async function listAll(sb: Sb, prefix: string): Promise<{ name: string; updated_at?: string }[]> {
-	const out: { name: string; updated_at?: string }[] = [];
+export async function listAll(sb: Sb, prefix: string): Promise<{ name: string; updated_at?: string; size?: number }[]> {
+	const out: { name: string; updated_at?: string; size?: number }[] = [];
 	const pageSize = 1000;
 	for (let offset = 0; ; offset += pageSize) {
 		const { data, error } = await sb.storage.from(BUCKET).list(prefix, { limit: pageSize, offset });
@@ -303,7 +318,7 @@ export async function listAll(sb: Sb, prefix: string): Promise<{ name: string; u
 		for (const item of data ?? []) {
 			const full = prefix ? `${prefix}/${item.name}` : item.name;
 			if (item.id === null) out.push(...(await listAll(sb, full)));
-			else if (item.name !== '.emptyFolderPlaceholder') out.push({ name: full, updated_at: item.updated_at });
+			else if (item.name !== '.emptyFolderPlaceholder') out.push({ name: full, updated_at: item.updated_at, size: item.metadata?.size });
 		}
 		if (!data || data.length < pageSize) break;
 	}

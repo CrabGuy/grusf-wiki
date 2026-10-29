@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { render, type Heading } from '#lib/dokuwiki.ts';
-	import { mediaUrls, pageHref, pageIndex } from '#lib/wiki.svelte.ts';
+	import { imageUrls, mediaUrls, pageHref, pageIndex } from '#lib/wiki.svelte.ts';
 
 	let {
 		text,
@@ -15,19 +15,23 @@
 		headings = result.headings;
 	});
 
-	// Private media need signed URLs: fill them in after each render.
+	// Private media need signed URLs: fill them in after each render. Images show their
+	// web-size copy when there is one; links (and clicking an image) open the original.
 	$effect(() => {
 		void result.html;
 		const imgs = [...el.querySelectorAll<HTMLImageElement>('img[data-media]')];
 		const links = [...el.querySelectorAll<HTMLAnchorElement>('a[data-media-link]')];
-		const ids = [...imgs.map((i) => i.dataset.media!), ...links.map((a) => a.dataset.mediaLink!)];
-		if (!ids.length) return;
-		mediaUrls(ids).then((urls) => {
-			for (const img of imgs) {
-				const url = urls.get(img.dataset.media!);
-				if (url) img.src = url;
-				else img.classList.add('broken');
-			}
+		if (imgs.length) {
+			imageUrls(imgs.map((i) => i.dataset.media!)).then((urls) => {
+				for (const img of imgs) {
+					const url = urls.get(img.dataset.media!);
+					if (url) img.src = url;
+					else img.classList.add('broken');
+				}
+			});
+		}
+		if (!links.length) return;
+		mediaUrls(links.map((a) => a.dataset.mediaLink!)).then((urls) => {
 			for (const a of links) {
 				const url = urls.get(a.dataset.mediaLink!);
 				if (url) {
