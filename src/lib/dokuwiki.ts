@@ -91,6 +91,13 @@ function blocks(lines: string[], ctx: Ctx): string {
 			continue;
 		}
 
+		// A link split over two lines (`[[url` / `|label]]`): like DokuWiki, finish the link
+		// before looking at the next line as a table row or list item.
+		if (para.length && openLinks(para.join('\n')) > 0) {
+			para.push(line.trim());
+			continue;
+		}
+
 		if ((m = line.match(RE.code))) {
 			flush();
 			const tag = m[1].toLowerCase();
@@ -452,6 +459,11 @@ function inline(s: string, ctx: Ctx): string {
 		i++;
 	}
 	return out;
+}
+
+/** Number of `[[` without a matching `]]`. */
+function openLinks(s: string): number {
+	return (s.match(/\[\[/g)?.length ?? 0) - (s.match(/\]\]/g)?.length ?? 0);
 }
 
 /** Index of `close` after `from`, skipping over nested [[...]], {{...}} and %%...%%. */

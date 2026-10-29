@@ -31,3 +31,8 @@ supabase/.branches
 /data
 /backup
 /dokuwiki
+
+# Original DokuWiki archives
+*.tar
+*.tar.gz
+*.tgz

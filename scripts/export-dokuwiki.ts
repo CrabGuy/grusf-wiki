@@ -12,7 +12,7 @@ const dataDir = path.join(out, 'data');
 const sb = adminClient();
 
 const files = [];
-for (const folder of ['pages', 'media', 'attic', 'meta']) files.push(...(await listAll(sb, folder)));
+for (const folder of ['pages', 'media', 'attic', 'meta', 'media_attic', 'media_meta']) files.push(...(await listAll(sb, folder)));
 console.log(`Scarico ${files.length} file in ${dataDir}`);
 
 let done = 0;

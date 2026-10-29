@@ -1,12 +1,14 @@
 // Import a DokuWiki installation into Supabase.
 //
-//   npm run import -- <path> [--users] [--dry-run]
+//   npm run import -- <path> [--users] [--replace] [--dry-run]
 //
 // <path> is the DokuWiki root folder (the one containing data/ and conf/) or its data/ folder.
-// Uploads data/pages, data/media, data/attic and data/meta/*.changes to the `wiki` bucket
-// (same layout, so the files stay plain DokuWiki files), then rebuilds the search index.
-// With --users, also creates accounts from conf/users.auth.php: bcrypt passwords are kept,
-// so members can log in with their old password; other hash types get a new password.
+// Uploads data/pages, media, attic, media_attic and the meta/ + media_meta/ changelogs to the
+// `wiki` bucket (same layout, so the files stay plain DokuWiki files), then rebuilds the search index.
+// With --users, also creates accounts from users.auth.php (in conf/ or next to data/): bcrypt
+// passwords are kept, so members can log in with their old password; other hash types get a new one.
+// With --replace, the wiki's current content is deleted first, so it ends up exactly like the
+// DokuWiki, and accounts that already exist take the DokuWiki password and name (admins stay admins).
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,6 +17,7 @@ import {
 	BUCKET,
 	cleanUsername,
 	generatePassword,
+	listAll,
 	reindex,
 	usernameToEmail
 } from '../supabase/functions/_shared/wiki-core.ts';
@@ -22,15 +25,18 @@ import {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const withUsers = args.includes('--users');
+const replace = args.includes('--replace');
 const root = args.find((a) => !a.startsWith('--'));
 
 if (!root) {
-	console.error('Uso: npm run import -- <cartella DokuWiki> [--users] [--dry-run]');
+	console.error('Uso: npm run import -- <cartella DokuWiki> [--users] [--replace] [--dry-run]');
 	process.exit(1);
 }
 
 const dataDir = fs.existsSync(path.join(root, 'data', 'pages')) ? path.join(root, 'data') : root;
-const confDir = fs.existsSync(path.join(root, 'conf')) ? path.join(root, 'conf') : path.join(dataDir, '..', 'conf');
+const usersFile = [path.join(root, 'conf'), root, path.join(dataDir, '..', 'conf'), path.join(dataDir, '..')]
+	.map((d) => path.join(d, 'users.auth.php'))
+	.find((f) => fs.existsSync(f));
 if (!fs.existsSync(path.join(dataDir, 'pages'))) {
 	console.error(`Non trovo la cartella pages/ in ${dataDir}`);
 	process.exit(1);
@@ -39,6 +45,7 @@ if (!fs.existsSync(path.join(dataDir, 'pages'))) {
 const MIME: Record<string, string> = {
 	'.txt': 'text/plain; charset=utf-8',
 	'.changes': 'text/plain; charset=utf-8',
+	'.meta': 'text/plain; charset=utf-8',
 	'.gz': 'application/gzip',
 	'.png': 'image/png',
 	'.jpg': 'image/jpeg',
@@ -65,25 +72,40 @@ function walk(dir: string): string[] {
 	});
 }
 
+const FOLDERS = ['pages', 'media', 'attic', 'meta', 'media_attic', 'media_meta'];
 const files: { local: string; remote: string }[] = [];
-for (const folder of ['pages', 'media', 'attic', 'meta']) {
+for (const folder of FOLDERS) {
 	for (const local of walk(path.join(dataDir, folder))) {
 		const rel = path.relative(dataDir, local).split(path.sep).join('/');
 		if (folder === 'pages' && !rel.endsWith('.txt')) continue;
 		if (folder === 'attic' && !rel.endsWith('.txt.gz')) continue;
-		if (folder === 'meta' && !rel.endsWith('.changes')) continue;
-		if (path.basename(rel).startsWith('_') && folder !== 'meta') continue;
+		// Changelogs and page metadata; DokuWiki rebuilds its search index files itself.
+		if (folder.endsWith('meta') && !/\.(changes|meta)$/.test(rel)) continue;
+		// Placeholder files and the cookie salt (a server secret).
+		if (/^(_dummy|_htcookiesalt)/.test(path.basename(rel))) continue;
 		files.push({ local, remote: rel });
 	}
 }
 
 console.log(`Trovati ${files.length} file in ${dataDir}`);
-for (const folder of ['pages', 'media', 'attic', 'meta']) {
+for (const folder of FOLDERS) {
 	console.log(`  ${folder}/: ${files.filter((f) => f.remote.startsWith(folder + '/')).length}`);
 }
 if (dryRun) process.exit(0);
 
 const sb = adminClient();
+
+if (replace) {
+	console.log('Elimino il contenuto attuale del wiki…');
+	for (const folder of FOLDERS) {
+		const old = (await listAll(sb, folder)).map((f) => f.name);
+		for (let i = 0; i < old.length; i += 100) {
+			const { error } = await sb.storage.from(BUCKET).remove(old.slice(i, i + 100));
+			if (error) throw new Error(error.message);
+		}
+		if (old.length) console.log(`  ${folder}/: ${old.length} file eliminati`);
+	}
+}
 
 let done = 0;
 let failed = 0;
@@ -116,17 +138,18 @@ console.log(`Indice: ${res.pages} pagine, ${res.changes} modifiche`);
 if (withUsers) await importUsers();
 
 async function importUsers() {
-	const file = path.join(confDir, 'users.auth.php');
-	if (!fs.existsSync(file)) {
-		console.error(`Non trovo ${file}`);
+	const file = usersFile;
+	if (!file) {
+		console.error('Non trovo users.auth.php');
 		return;
 	}
 	const lines = fs
 		.readFileSync(file, 'utf8')
 		.split('\n')
 		.filter((l) => l.trim() && !l.startsWith('#'));
-	const { data: existing } = await sb.from('profiles').select('username');
-	const taken = new Set((existing ?? []).map((p) => p.username));
+	const { data: existing } = await sb.from('profiles').select('id, username, role');
+	const byUsername = new Map((existing ?? []).map((p) => [p.username, p]));
+	const taken = new Set(byUsername.keys());
 	const newPasswords: string[] = [];
 
 	console.log(`\nImporto ${lines.length} utenti…`);
@@ -134,11 +157,27 @@ async function importUsers() {
 		// login:passwordhash:Real Name:email:groups
 		const [login, hash, realName, , groups = ''] = line.split(':').map((s) => decodeURIComponent(s.trim()));
 		const username = cleanUsername(login);
+		const isBcrypt = /^\$2[abxy]\$/.test(hash);
+		const wasAdmin = groups.split(',').map((g) => g.trim()).includes('admin');
+		const current = byUsername.get(username);
+		if (current && replace && isBcrypt) {
+			// The DokuWiki account wins: its password and name replace the current ones.
+			const { error } = await sb.auth.admin.updateUserById(current.id, {
+				password_hash: hash.replace(/^\$2[xy]\$/, '$2a$')
+			});
+			if (error) {
+				console.error(`  ✗ ${login}: ${error.message}`);
+				continue;
+			}
+			const role = current.role === 'admin' || wasAdmin ? 'admin' : 'user';
+			await sb.from('profiles').update({ display_name: realName || username, role }).eq('id', current.id);
+			console.log(`  ↻ ${username}: account esistente aggiornato con password e nome di DokuWiki${role === 'admin' ? ' (admin)' : ''}`);
+			continue;
+		}
 		if (!username || taken.has(username)) {
 			console.log(`  - ${login}: già presente, salto`);
 			continue;
 		}
-		const isBcrypt = /^\$2[abxy]\$/.test(hash);
 		const password = isBcrypt ? undefined : generatePassword();
 		const { data, error } = await sb.auth.admin.createUser({
 			email: usernameToEmail(username),
@@ -150,7 +189,7 @@ async function importUsers() {
 			console.error(`  ✗ ${login}: ${error?.message}`);
 			continue;
 		}
-		const role = groups.split(',').map((g) => g.trim()).includes('admin') ? 'admin' : 'user';
+		const role = wasAdmin ? 'admin' : 'user';
 		const { error: pErr } = await sb
 			.from('profiles')
 			.insert({ id: data.user.id, username, display_name: realName || username, role });

@@ -109,15 +109,20 @@ and the secrets `SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD` (`.github/wor
 
 ## Importing the real DokuWiki data
 
-Copy the old DokuWiki folder (the one with `data/` and `conf/`) to your PC, then:
+Copy the old DokuWiki folder (the one with `data/` and `conf/`, or `data/` with `users.auth.php` next to it) into
+`dokuwiki/` in this repo (git-ignored, like `*.tar` archives), then:
 
 ```bash
 npm run import -- path/to/dokuwiki --dry-run   # just count the files
 npm run import -- path/to/dokuwiki             # upload pages, media, history; rebuild the index
-npm run import -- path/to/dokuwiki --users     # ...and create accounts from conf/users.auth.php
+npm run import -- path/to/dokuwiki --users     # ...and create accounts from users.auth.php
+npm run import -- path/to/dokuwiki --users --replace   # wipe the current content first (exact copy)
 ```
 
-- Pages, media, old revisions (`attic/`) and changelogs (`meta/*.changes`) keep their exact DokuWiki paths.
+- Pages, media, old revisions (`attic/`, `media_attic/`), changelogs and page metadata (`meta/`, `media_meta/`)
+  keep their exact DokuWiki paths. DokuWiki's own search index, cache and the cookie salt are not uploaded.
+- `--replace` deletes the wiki's current pages, media and history before uploading (run `npm run export` first
+  if you want a copy), and accounts that already exist take the DokuWiki password and name (admins stay admins).
 - With `--users`, bcrypt passwords (the DokuWiki default) are kept, so people log in with their old password.
   Members of the `admin` group become admins. Accounts with older hash formats get a new password, printed at the end.
 - Already uploaded files to the bucket by hand (Supabase dashboard → Storage)? Use **Utenti → Ricostruisci l'indice**.
