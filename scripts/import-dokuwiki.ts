@@ -160,19 +160,19 @@ async function importUsers() {
 		const isBcrypt = /^\$2[abxy]\$/.test(hash);
 		const wasAdmin = groups.split(',').map((g) => g.trim()).includes('admin');
 		const current = byUsername.get(username);
+		let keepAdmin = false;
 		if (current && replace && isBcrypt) {
-			// The DokuWiki account wins: its password and name replace the current ones.
-			const { error } = await sb.auth.admin.updateUserById(current.id, {
-				password_hash: hash.replace(/^\$2[xy]\$/, '$2a$')
-			});
+			// The DokuWiki account wins. Supabase silently ignores a password hash on an existing
+			// account, so it is recreated with the same username and the DokuWiki password and name.
+			// History is stored by username, so nothing else changes; admins stay admins.
+			const { error } = await sb.auth.admin.deleteUser(current.id);
 			if (error) {
 				console.error(`  ✗ ${login}: ${error.message}`);
 				continue;
 			}
-			const role = current.role === 'admin' || wasAdmin ? 'admin' : 'user';
-			await sb.from('profiles').update({ display_name: realName || username, role }).eq('id', current.id);
-			console.log(`  ↻ ${username}: account esistente aggiornato con password e nome di DokuWiki${role === 'admin' ? ' (admin)' : ''}`);
-			continue;
+			taken.delete(username);
+			keepAdmin = current.role === 'admin';
+			console.log(`  ↻ ${username}: account esistente sostituito da quello di DokuWiki`);
 		}
 		if (!username || taken.has(username)) {
 			console.log(`  - ${login}: già presente, salto`);
@@ -189,7 +189,7 @@ async function importUsers() {
 			console.error(`  ✗ ${login}: ${error?.message}`);
 			continue;
 		}
-		const role = wasAdmin ? 'admin' : 'user';
+		const role = wasAdmin || keepAdmin ? 'admin' : 'user';
 		const { error: pErr } = await sb
 			.from('profiles')
 			.insert({ id: data.user.id, username, display_name: realName || username, role });
