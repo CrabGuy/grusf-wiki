@@ -18,7 +18,8 @@
 		"import": "node scripts/import-dokuwiki.ts",
 		"import:sample": "node scripts/import-dokuwiki.ts sample-data/dokuwiki",
 		"export": "node scripts/export-dokuwiki.ts",
-		"thumbs": "node scripts/thumbs.ts"
+		"thumbs": "node scripts/thumbs.ts",
+		"keepalive": "node scripts/keepalive.ts"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^4.0.0",

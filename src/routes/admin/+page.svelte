@@ -2,7 +2,7 @@
 	import { callFunction } from '#lib/supabase.ts';
 	import { session } from '#lib/session.svelte.ts';
 	import { toast } from '#lib/toast.svelte.ts';
-	import { href, pageIndex, timeAgo } from '#lib/wiki.svelte.ts';
+	import { href, pageIndex, timeAgo, usage, type Usage } from '#lib/wiki.svelte.ts';
 	import Dialog from '#lib/components/Dialog.svelte';
 
 	interface User {
@@ -40,7 +40,25 @@
 			loading = false;
 		}
 	}
-	if (session.isAdmin) load();
+	let space = $state<Usage | null>(null);
+	if (session.isAdmin) {
+		load();
+		usage().then((u) => (space = u), () => {});
+	}
+
+	const STORAGE_MAX = 1e9;
+	const DB_MAX = 500e6;
+	const mb = (b: number) => (b < 10e6 ? (b / 1e6).toFixed(1) : Math.round(b / 1e6)) + ' MB';
+	const groups = $derived.by(() => {
+		const sum = (...names: string[]) =>
+			(space?.folders ?? []).filter((f) => names.includes(f.folder)).reduce((a, f) => a + f.bytes, 0);
+		return [
+			{ label: 'Immagini e allegati', bytes: sum('media', 'media_attic') },
+			{ label: 'Copie leggere delle immagini', bytes: sum('cache') },
+			{ label: 'Pagine e cronologia', bytes: sum('pages', 'attic', 'meta', 'media_meta') }
+		];
+	});
+	const pingAge = $derived(space ? Date.now() - new Date(space.pinged_at).getTime() : 0);
 
 	const siteUrl = $derived(location.origin + href('/'));
 
@@ -235,6 +253,35 @@
 			</ul>
 		{/if}
 
+		{#if space}
+			{@const pct = Math.min(100, (space.storage_bytes / STORAGE_MAX) * 100)}
+			<section class="card outlined maint space">
+				<div class="row">
+					<span class="icon accent">cloud</span>
+					<h2 class="title-m">Spazio e attività</h2>
+				</div>
+				<div class="meter-label body-m">
+					<span>File: <strong>{mb(space.storage_bytes)}</strong> di 1 GB</span>
+					<span class="muted">{pct.toFixed(0)}%</span>
+				</div>
+				<div class="meter" class:warn={pct >= 80}><span style:width="{Math.max(pct, 1)}%"></span></div>
+				<ul class="body-s muted parts">
+					{#each groups as g (g.label)}<li>{g.label}: {mb(g.bytes)}</li>{/each}
+					<li>Database: {mb(space.database_bytes)} di {mb(DB_MAX)}</li>
+				</ul>
+				<p class="body-s muted">
+					Le foto caricate vengono ridotte a 2560 px prima di essere salvate, quindi lo spazio cresce lentamente.
+				</p>
+				<p class="body-m" class:alert={pingAge > 2 * 864e5}>
+					<span class="icon">{pingAge > 2 * 864e5 ? 'warning' : 'schedule'}</span>
+					Ultimo ping automatico {timeAgo(space.pinged_at)}.
+					{#if pingAge > 2 * 864e5}
+						Controlla il job su cron-job.org: dopo 7 giorni senza attività Supabase mette in pausa il wiki.
+					{/if}
+				</p>
+			</section>
+		{/if}
+
 		<section class="card outlined maint">
 			<div class="row">
 				<span class="icon accent">build</span>
@@ -406,6 +453,45 @@
 	}
 	.maint p {
 		margin: 0;
+	}
+	.space {
+		align-items: stretch;
+	}
+	.meter-label {
+		display: flex;
+		justify-content: space-between;
+	}
+	.meter {
+		height: 8px;
+		border-radius: var(--md-shape-full);
+		background: var(--md-surface-container-highest);
+		overflow: hidden;
+	}
+	.meter span {
+		display: block;
+		height: 100%;
+		border-radius: inherit;
+		background: var(--md-primary);
+	}
+	.meter.warn span {
+		background: var(--md-error);
+	}
+	.parts {
+		margin: 0;
+		padding-left: 20px;
+	}
+	.space p {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.space p .icon {
+		font-size: 20px;
+		color: var(--md-on-surface-variant);
+	}
+	.space p.alert,
+	.space p.alert .icon {
+		color: var(--md-error);
 	}
 	.creds {
 		display: flex;

@@ -285,12 +285,70 @@ async function uploadThumb(id: string, file: File) {
 	if (!error) noThumb.delete(id);
 }
 
+/** Longest side kept for uploaded photos: enough for screens and for printing up to A4. */
+const ORIGINAL_MAX = 2560;
+/** Images smaller than this (and within ORIGINAL_MAX) are stored exactly as uploaded. */
+const SHRINK_FROM = 1_000_000;
+/** Files larger than this (after shrinking) are refused, to protect the 1 GB of the free plan. */
+export const MAX_UPLOAD = 20_000_000;
+
+function encode(canvas: HTMLCanvasElement, type: string, quality: number) {
+	return new Promise<Blob | null>((r) => canvas.toBlob(r, type, quality));
+}
+
+/**
+ * Store large photos and posters at a sensible size: at most ORIGINAL_MAX px, as JPEG (or
+ * WebP when the image has transparency). Phone photos go from 4-12 MB to well under 1 MB.
+ * Returns the file unchanged when it is not a raster image, already small, or would not shrink.
+ */
+async function shrinkImage(file: File): Promise<File> {
+	if (!/^image\/(jpeg|png|webp|bmp)$/.test(file.type)) return file;
+	let bitmap: ImageBitmap;
+	try {
+		bitmap = await createImageBitmap(file);
+	} catch {
+		return file;
+	}
+	const scale = Math.min(1, ORIGINAL_MAX / Math.max(bitmap.width, bitmap.height));
+	if (scale === 1 && file.size <= SHRINK_FROM) {
+		bitmap.close();
+		return file;
+	}
+	const canvas = document.createElement('canvas');
+	canvas.width = Math.round(bitmap.width * scale);
+	canvas.height = Math.round(bitmap.height * scale);
+	const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+	ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+	bitmap.close();
+	let transparent = false;
+	if (file.type !== 'image/jpeg') {
+		const px = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+		for (let i = 3; i < px.length; i += 4)
+			if (px[i] < 255) {
+				transparent = true;
+				break;
+			}
+	}
+	const blob = transparent ? await encode(canvas, 'image/webp', 0.9) : await encode(canvas, 'image/jpeg', 0.88);
+	const ext = transparent ? '.webp' : '.jpg';
+	// Browsers without WebP encoding hand back a PNG: keep the original then.
+	if (!blob || blob.type !== (transparent ? 'image/webp' : 'image/jpeg') || blob.size >= file.size) return file;
+	const name = file.name.replace(/\.[^.]*$/, '') + ext;
+	return new File([blob], name, { type: blob.type, lastModified: file.lastModified });
+}
+
 /** Upload an image/attachment into the page's namespace. Returns the media id. */
-export async function uploadMedia(ns: string, file: File): Promise<string> {
+export async function uploadMedia(ns: string, original: File): Promise<string> {
+	const file = await shrinkImage(original);
+	if (file.size > MAX_UPLOAD)
+		throw new Error(
+			`${original.name} è troppo grande (${(file.size / 1e6).toFixed(0)} MB, massimo ${MAX_UPLOAD / 1e6} MB). ` +
+				'Per i PDF prova a comprimerlo, per esempio con ilovepdf.com.'
+		);
 	const dot = file.name.lastIndexOf('.');
 	const ext = dot > 0 ? file.name.slice(dot).toLowerCase() : file.type === 'image/png' ? '.png' : '';
 	const base = cleanId((dot > 0 ? file.name.slice(0, dot) : file.name).replace(/:/g, '_')) || 'immagine';
-	const stamp = file.name === 'image.png' ? `_${Date.now().toString(36)}` : '';
+	const stamp = original.name === 'image.png' ? `_${Date.now().toString(36)}` : '';
 	for (let n = 0; n < 50; n++) {
 		const name = `${base}${stamp}${n ? `_${n}` : ''}${ext}`;
 		const id = ns ? `${ns}:${name}` : name;
@@ -305,6 +363,20 @@ export async function uploadMedia(ns: string, file: File): Promise<string> {
 		if (!/exists|duplicate/i.test(error.message)) throw error;
 	}
 	throw new Error('Impossibile caricare il file');
+}
+
+export interface Usage {
+	storage_bytes: number;
+	folders: { folder: string; files: number; bytes: number }[];
+	database_bytes: number;
+	pinged_at: string;
+}
+
+/** Space used on the free plan and the last keep-alive ping (admins only). */
+export async function usage(): Promise<Usage> {
+	const { data, error } = await supabase.rpc('usage');
+	if (error) throw error;
+	return data as Usage;
 }
 
 export async function listMedia(ns: string) {

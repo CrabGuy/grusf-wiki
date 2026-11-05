@@ -16,7 +16,8 @@ exported back at any time.
 - Login with **username + password**; no public sign-up.
 - Two roles: **members** read and edit everything; **admins** can also manage accounts.
 - **Meeting minutes first**: "Scrivi il verbale di oggi" creates a ready-made page
-  (`verbali:YYYY-MM-DD`) with the previous meeting's attendees and open to-dos already filled in.
+  (`verbali:YYYY-MM-DD_rt`, same heading and `**PRESENTI**:` line as the existing minutes) with the previous
+  meeting's attendees already filled in.
   If the minutes for today already exist, the same button reopens them.
 - Editor with toolbar, live preview, automatic list continuation, Tab indent, Ctrl+S / Ctrl+B / Ctrl+I / Ctrl+K,
   **paste or drag images** to upload them, and local draft autosave.
@@ -30,6 +31,9 @@ exported back at any time.
   page history with diff and one-click restore.
 - Admin page: type names (one per line) and get accounts with readable passwords like `gatto-luna-pane-42`,
   plus a ready-to-paste WhatsApp message for each person. Reset passwords and promote admins in one click.
+  It also shows the space used on the free plan and when the keep-alive ping last ran.
+- **Light on storage and data**: photos are reduced to 2560 px (JPEG, or WebP when transparent) in the
+  browser before upload, files over 20 MB are refused, and pages show 1600 px copies of large images.
 
 ## How it works
 
@@ -104,6 +108,18 @@ npm run dev
 3. **Settings → Secrets and variables → Actions → Variables**: add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
 4. Every push to `main` rebuilds the site (`.github/workflows/deploy.yml`).
 5. In `supabase/config.toml`, set `site_url` to your Pages URL and run `npm run config:push`.
+
+### Keep the project awake
+
+Free Supabase projects are paused after 7 days without database activity. The static site on GitHub Pages
+doesn't touch the database by itself, so a daily job on [cron-job.org](https://cron-job.org) calls the
+`ping()` database function (it updates one row in `keepalive`):
+
+1. Create a free account on cron-job.org, then **Settings → API → Create API key**.
+2. Put it in `.env` as `CRONJOB_API_KEY=...` and run `npm run keepalive`.
+
+The script creates (or updates) the job "GRUSF wiki keep-alive", which runs every day at 04:17 (Italian time) and e-mails the
+cron-job.org account if it fails twice in a row. The admin page shows when the last ping arrived.
 
 Optional: to deploy migrations and functions automatically on push, add the variable `SUPABASE_PROJECT_REF`
 and the secrets `SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD` (`.github/workflows/supabase.yml`).
