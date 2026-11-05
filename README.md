@@ -34,6 +34,7 @@ exported back at any time.
   It also shows the space used on the free plan and when the keep-alive ping last ran.
 - **Light on storage and data**: photos are reduced to 2560 px (JPEG, or WebP when transparent) in the
   browser before upload, files over 20 MB are refused, and pages show 1600 px copies of large images.
+  `npm run shrink-media` does the same for images already stored (names unchanged; originals kept in `backup/`).
 
 ## How it works
 
