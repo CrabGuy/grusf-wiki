@@ -113,13 +113,14 @@ npm run dev
 ### Keep the project awake
 
 Free Supabase projects are paused after 7 days without database activity. The static site on GitHub Pages
-doesn't touch the database by itself, so a daily job on [cron-job.org](https://cron-job.org) calls the
+doesn't touch the database by itself, so a job on [cron-job.org](https://cron-job.org) calls the
 `ping()` database function (it updates one row in `keepalive`):
 
 1. Create a free account on cron-job.org, then **Settings → API → Create API key**.
 2. Put it in `.env` as `CRONJOB_API_KEY=...` and run `npm run keepalive`.
 
-The script creates (or updates) the job "GRUSF wiki keep-alive", which runs every day at 04:17 (Italian time) and e-mails the
+The script creates (or updates) the job "GRUSF wiki keep-alive", which runs every 2 hours at a random minute
+(picked again each time you run the script; a single daily ping turned out not to be enough) and e-mails the
 cron-job.org account if it fails twice in a row. The admin page shows when the last ping arrived.
 
 Optional: to deploy migrations and functions automatically on push, add the variable `SUPABASE_PROJECT_REF`
